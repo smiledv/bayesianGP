@@ -1,0 +1,80 @@
+rm(list = ls())
+
+my_log <- file("my_log.txt") # File name of output log
+sink(my_log, append = TRUE, type = "output") # Writing console output to log file
+sink(my_log, append = TRUE, type = "message")
+cat(readChar(rstudioapi::getSourceEditorContext()$path, # Writing currently opened R script to file
+             file.info(rstudioapi::getSourceEditorContext()$path)$size))
+
+library("hibayes")
+
+data <- read_plink(bfile="genomic", out="./test")
+# directly use the genotype for the next time, no need to use 'read_plink' again:
+geno <- attach.big.matrix("./test.desc")
+map <- read.table("./test.map", header=TRUE)
+
+pheno1 <- read.table ("IgA_adjphen_reduced.txt", header = T)
+fam <- read.table ("genomic.fam", header = F)
+colnames(fam)[1] <- "ID"
+pheno2 <- merge(fam,pheno1,by="ID")
+pheno <- pheno2[,c("ID","adj_phen")]
+
+#BayesA
+
+fit2 <- bayes(y = pheno[, 2], M = geno, model = "BayesA", niter = 100000, nburn = 20000,threads=4)
+
+gebv2 <- as.data.frame(fit2$g)
+colnames(gebv2)[1] <- "BayesA_GEBV_val"
+id_gebv2 <- cbind(pheno,gebv2)
+id_gebv2 <- id_gebv2[,c("ID","BayesA_GEBV_val")]
+print("BayesA finished")
+write.table(id_gebv2,"BayesA_results.txt",row.names = F, quote = F)
+
+
+#BayesB
+
+fit2 <- bayes(y = pheno[, 2], M = geno, model = "BayesB", niter = 100000, nburn = 20000,threads=4)
+
+gebv2 <- as.data.frame(fit2$g)
+colnames(gebv2)[1] <- "BayesB_GEBV_val"
+id_gebv2 <- cbind(pheno,gebv2)
+id_gebv2 <- id_gebv2[,c("ID","BayesB_GEBV_val")]
+print("BayesB finished")
+write.table(id_gebv2,"BayesB_results.txt",row.names = F, quote = F)
+
+
+#BayesCpi
+
+fit5 <- bayes(y = pheno[, 2], M = geno, model = "BayesCpi", Pi = c(0.95, 0.05), niter = 100000, nburn = 20000,threads=4)
+
+gebv5 <- as.data.frame(fit5$g)
+colnames(gebv5)[1] <- "BayesCpi_GEBV_val"
+id_gebv5 <- cbind(pheno,gebv5)
+id_gebv5 <- id_gebv5[,c("ID","BayesCpi_GEBV_val")]
+print("BayesCpi finished")
+write.table(id_gebv5,"BayesCpi_results.txt",row.names = F, quote = F)
+
+#BayesL
+
+fit6 <- bayes(y = pheno[, 2], M = geno, model = "BayesL", niter = 100000, nburn = 20000,threads=4)
+
+gebv6 <- as.data.frame(fit6$g)
+colnames(gebv6)[1] <- "BayesL_GEBV_val"
+id_gebv6 <- cbind(pheno,gebv6)
+id_gebv6 <- id_gebv6[,c("ID","BayesL_GEBV_val")]
+print("BayesL finished")
+write.table(id_gebv6,"BayesL_results.txt",row.names = F, quote = F)
+
+#BayesR
+
+fit7 <- bayes(y = pheno[, 2], M = geno, model = "BayesR", niter = 100000, nburn = 20000,threads=4)
+
+gebv7 <- as.data.frame(fit7$g)
+colnames(gebv7)[1] <- "BayesR_GEBV_val"
+id_gebv7 <- cbind(pheno,gebv7)
+id_gebv7 <- id_gebv7[,c("ID","BayesR_GEBV_val")]
+write.table(id_gebv7,"BayesR_results.txt",row.names = F, quote = F)
+print("BayesR finished")
+closeAllConnections() # Close connection to log file
+
+rm(list = ls())
